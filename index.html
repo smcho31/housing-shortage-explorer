@@ -44,6 +44,9 @@ h1{font-family:var(--f-display);font-weight:600;font-size:clamp(26px,3.4vw,36px)
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 .tab:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--emph);outline-offset:2px}
 .controls{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:flex-end}
+.card>.controls{margin-top:12px}
+.side .ctl{align-items:flex-start}
+.card>.note{margin-top:10px;background:var(--bg)}
 .ctl{display:flex;flex-direction:column;gap:6px;min-width:0}
 .ctl>span{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}
@@ -153,17 +156,15 @@ h2{font-size:17px;font-weight:600;margin:0;text-wrap:balance}
     <button class="tab" role="tab" id="tab-vg" aria-selected="false">Vacancy gap</button>
   </nav>
 
-  <section class="controls" aria-label="Filters">
-    <div class="ctl" id="breakdownCtl"><span>Break down by</span><div class="seg" id="breakdown"></div></div>
-    <div class="ctl" id="groupCtl"><span id="groupLabel">Group</span><div class="chips" id="groups"></div></div>
-    <div class="ctl"><span>Show values as</span><div class="seg" id="unit">
-      <button id="u-units" aria-pressed="true">Housing units</button><button id="u-pct" aria-pressed="false">% of 2000 stock</button></div></div>
-  </section>
-  <p class="note" id="note" hidden></p>
 
   <div class="grid">
     <section class="card" aria-labelledby="mapTitle">
       <div class="cardhead"><div><h2 id="mapTitle"></h2><p class="sub" id="mapSub"></p></div></div>
+      <div class="controls" aria-label="Breakdown">
+        <div class="ctl" id="breakdownCtl"><span>Break down by</span><div class="seg" id="breakdown"></div></div>
+        <div class="ctl" id="groupCtl"><span id="groupLabel">Group</span><div class="chips" id="groups"></div></div>
+      </div>
+      <p class="note" id="note" hidden></p>
       <div class="yearbar">
         <button class="play" id="play" aria-label="Play years"><svg viewBox="0 0 12 12"><path id="playIcon" d="M2 1l9 5-9 5z"/></svg></button>
         <input type="range" id="year" min="0" max="18" step="1" aria-label="Year">
@@ -180,6 +181,8 @@ h2{font-size:17px;font-weight:600;margin:0;text-wrap:balance}
         <button id="clear" type="button">All metros</button>
       </div>
       <h2 class="ctxname" id="ctxName"></h2>
+      <div class="ctl"><span>Show values as</span><div class="seg" id="unit">
+        <button id="u-units" aria-pressed="true">Housing units</button><button id="u-pct" aria-pressed="false">% of 2000 stock</button></div></div>
       <div class="kpis" id="kpis"></div>
       <div class="linewrap" id="lineWrap"><svg id="line" role="img" aria-label="Trend 2006 to 2024"></svg></div>
       <div class="linelegend" id="lineLegend"></div>
@@ -203,7 +206,7 @@ h2{font-size:17px;font-weight:600;margin:0;text-wrap:balance}
       <p>Natural vacancy rates are estimated for each metro and tenure market from the relationship between vacancy rates and subsequent house-price or rent growth.</p>
       <p>A positive value indicates fewer vacant units than the benchmark implies; a negative value indicates more. The measure describes vacancy conditions for existing households and does not include the additional housing demand represented by missing households.</p></div>
     <div><h3>Data and totals</h3>
-      <p>Estimates use the 2000 Census 5% sample and ACS 1-year microdata from IPUMS USA for 202 metropolitan areas in the contiguous United States, using 2013 CBSA definitions. The series covers 2006–2024; 2020 estimates use the Census Bureau’s experimental ACS 1-year weights. These are preliminary research estimates for the covered metros, not a complete U.S. total.</p>
+      <p>Estimates use the 2000 Census 5% sample and ACS 1-year microdata from IPUMS USA for 202 metropolitan areas in the contiguous United States, using 2013 CBSA definitions. The series covers 2006–2024, while 2020 estimates use the Census Bureau’s experimental ACS 1-year weights. These are preliminary research estimates for the covered metros, not a complete U.S. total.</p>
       <p>“All 202 metros” sums positive gaps for the selected measure or group, without offsetting them against negative gaps elsewhere. For the combined vacancy gap, positive owner and rental gaps are summed separately. Because this rule is applied separately to each group, aggregate group totals need not sum to the overall total.</p>
       <p>Percentages divide the selected gap by the metro’s 2000 reference housing stock. For “All 202 metros,” the denominator is the combined reference stock of all 202 metros. Group percentages use this same denominator, not the group’s population or household count.</p>
       <p>Education estimates cover adults ages 25–64 and use a separate age × education headship benchmark. They are not a decomposition of the main age × race/ethnicity estimate.</p></div>
