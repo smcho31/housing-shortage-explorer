@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Housing Shortage Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+<style>
+/* Layout: a working instrument — header, tabs and one control row, then map (wide) beside a metro panel, ranking table below, methods last. */
+:root{
+  --bg:#f5f7f9; --surface:#ffffff; --ink:#15202b; --ink2:#46525e; --muted:#6f7b87;
+  --line:#dfe4e9; --land:#e9edf1; --border:#c4ccd4; --accent:#15202b;
+  --emph:#b4322f; --other:#b5bec7;
+  --d-n3:#1c5cab; --d-n2:#6da7ec; --d-0:#d3d6d9; --d-p1:#f3a39b; --d-p2:#e34948; --d-p3:#9e2622;
+  --ring:#ffffff;
+  --f-display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-body:"Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#11161b; --surface:#192028; --ink:#e7ecf1; --ink2:#a8b3be; --muted:#7f8b97;
+  --line:#2a333d; --land:#212932; --border:#3a4550; --accent:#e7ecf1;
+  --emph:#f06e68; --other:#4c5662;
+  --d-n3:#3f8ae6; --d-n2:#8dbcf1; --d-0:#4a525a; --d-p1:#f2a19a; --d-p2:#e45f5e; --d-p3:#c43a36;
+  --ring:#192028; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#11161b; --surface:#192028; --ink:#e7ecf1; --ink2:#a8b3be; --muted:#7f8b97;
+  --line:#2a333d; --land:#212932; --border:#3a4550; --accent:#e7ecf1;
+  --emph:#f06e68; --other:#4c5662;
+  --d-n3:#3f8ae6; --d-n2:#8dbcf1; --d-0:#4a525a; --d-p1:#f2a19a; --d-p2:#e45f5e; --d-p3:#c43a36;
+  --ring:#192028; color-scheme:dark }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+.app{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 40px;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin:0;text-wrap:balance}
+.dek{margin:0;color:var(--ink2);max-width:72ch}
+.byline{margin:0;font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:10px 14px;font:600 15px var(--f-body);color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--emph);outline-offset:2px}
+.controls{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ctl>span{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{appearance:none;border:0;border-right:1px solid var(--border);background:none;padding:6px 12px;font:500 14px var(--f-body);color:var(--ink2);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{appearance:none;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:5px 12px;font:500 14px var(--f-body);color:var(--ink2);cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--emph);color:var(--ink);box-shadow:inset 0 0 0 1px var(--emph)}
+.note{margin:0;font-size:13px;color:var(--ink2);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:20px;align-items:stretch}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.cardhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+h2{font-size:17px;font-weight:600;margin:0;text-wrap:balance}
+.sub{font-size:13px;color:var(--muted);margin:2px 0 0}
+.yearbar{display:flex;align-items:center;gap:10px;margin-top:10px}
+.yearbar input{flex:1;min-width:0;accent-color:var(--ink)}
+.yearlabel{font:700 22px var(--f-body);font-variant-numeric:tabular-nums;min-width:3.2ch}
+.play{appearance:none;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;display:grid;place-items:center;flex:none}
+.play svg{width:12px;height:12px;fill:currentColor}
+#map{width:100%;height:auto;display:block;margin-top:8px}
+#map .nation{fill:var(--land);stroke:none}
+#map .states{fill:none;stroke:var(--surface);stroke-width:1.2}
+#map .b{stroke:var(--ring);stroke-width:1;cursor:pointer}
+#map .b.sel{stroke:var(--ink);stroke-width:2.5}
+#map .hit{fill:transparent;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:flex-end;font-size:12px;color:var(--ink2);margin-top:6px}
+.lg-title{font-weight:600;color:var(--ink2);margin-bottom:4px}
+.lg-scale{width:min(320px,100%)}
+.lg-bins{display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
+.lg-bins i{display:block;height:10px;border-radius:2px}
+.lg-ticks{position:relative;height:16px;margin-top:3px;font-variant-numeric:tabular-nums}
+.lg-ticks span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.lg-ends{display:flex;justify-content:space-between;color:var(--muted)}
+.lg-size svg{display:block}
+.lg-size text{fill:var(--ink2);font-size:11px}
+.lg-size circle{fill:none;stroke:var(--muted)}
+.side{display:flex;flex-direction:column;gap:12px}
+.finder{display:flex;gap:8px}
+.finder input{flex:1;min-width:0;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font:14px var(--f-body);background:var(--bg);color:var(--ink)}
+.finder button{appearance:none;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink2);font:500 13px var(--f-body);padding:0 10px;cursor:pointer}
+.ctxname{font-size:18px;font-weight:700;margin:0;line-height:1.25;text-wrap:balance}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kpi{border-top:2px solid var(--line);padding-top:6px;min-width:0}
+.kpi .k{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .s{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+/* chart box: fills the panel's leftover height on desktop (panel = map card height); fixed height on mobile */
+.linewrap{position:relative;flex:1 1 auto;min-height:280px}
+@media (max-width:900px){.linewrap{flex:none;height:340px}}
+#line{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+#line text{fill:var(--muted);font-size:11px;font-family:var(--f-body);font-variant-numeric:tabular-nums}
+#line .grid line{stroke:var(--line)}
+#line .zero{stroke:var(--muted);stroke-width:1}
+#line .ln{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+#line .gapseg{fill:none;stroke-width:1.5;stroke-dasharray:2 4;opacity:.6}
+#line .cross{stroke:var(--muted);stroke-width:1}
+#line .yr{stroke:var(--ink);stroke-width:1;stroke-dasharray:3 3;opacity:.45}
+.linelegend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink2)}
+.linelegend span{display:inline-flex;align-items:center;gap:6px}
+.chartnote{margin:0;font-size:12px;color:var(--muted)}
+.linelegend i{width:14px;height:2px;border-radius:1px;display:inline-block}
+.rank table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+.tablewrap{overflow-x:auto;margin-top:10px}
+.rank th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-bottom:1px solid var(--line)}
+.rank td{padding:6px 8px;border-bottom:1px solid var(--line)}
+.rank td.n,.rank th.n{text-align:right}
+.rank tr.row{cursor:pointer}
+.rank tr.row:hover td{background:var(--bg)}
+.rank tr.sel td{font-weight:700}
+.barcell{width:28%}
+/* diverging bar: centre line = 0, shortage to the right, surplus to the left */
+.dbar{position:relative;height:10px}
+.dbar::before{content:'';position:absolute;left:50%;top:-4px;bottom:-4px;border-left:1px solid var(--border)}
+.bar{position:absolute;top:1px;left:50%;height:8px;border-radius:0 4px 4px 0;background:var(--d-p2)}
+.bar.neg{left:auto;right:50%;background:var(--d-n3);border-radius:4px 0 0 4px}
+.barhead{display:flex;justify-content:space-between;font-weight:600}
+.more{appearance:none;margin-top:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink2);font:500 13px var(--f-body);padding:6px 12px;cursor:pointer}
+.methods{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px 28px;font-size:13px;color:var(--ink2)}
+.methods h3{font-size:13px;font-weight:700;color:var(--ink);margin:0 0 4px}
+.methods p{margin:0 0 6px;max-width:68ch}
+.foot{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin:0}
+.tip{position:fixed;z-index:10;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.45;box-shadow:0 4px 16px rgba(0,0,0,.12);max-width:280px;font-variant-numeric:tabular-nums}
+.tip b{font-weight:700}
+.tip .t{font-weight:700;margin-bottom:2px}
+.tip .m{color:var(--muted)}
+.tip .row{display:flex;justify-content:space-between;gap:12px}
+.tip .sw{display:inline-block;width:10px;height:2px;margin-right:6px;vertical-align:middle}
+@media (max-width:520px){.barcell{display:none}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.kpi .v{font-size:17px}.app{padding-inline:16px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header>
+    <p class="eyebrow">Data science · U.S. housing shortages</p>
+    <h1>Housing Shortage Explorer</h1>
+    <p class="dek">Two measures of the U.S. housing shortage for 202 metropolitan areas, 2006–2024. Missing households counts the households that have not formed because people are doubling up or living with parents. The vacancy gap counts the vacant units a market lacks for normal turnover.</p>
+    <p class="byline">Seongmoon Cho · USC Sol Price School of Public Policy · Based on “How Many Units Are Needed? Measuring Housing Shortages in the U.S.” · Preliminary estimates, October 2026</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Measure">
+    <button class="tab" role="tab" id="tab-mh" aria-selected="true">Missing households</button>
+    <button class="tab" role="tab" id="tab-vg" aria-selected="false">Vacancy gap</button>
+  </nav>
+
+  <section class="controls" aria-label="Filters">
+    <div class="ctl" id="breakdownCtl"><span>Break down by</span><div class="seg" id="breakdown"></div></div>
+    <div class="ctl" id="groupCtl"><span id="groupLabel">Group</span><div class="chips" id="groups"></div></div>
+    <div class="ctl"><span>Show values as</span><div class="seg" id="unit">
+      <button id="u-units" aria-pressed="true">Housing units</button><button id="u-pct" aria-pressed="false">% of 2000 stock</button></div></div>
+  </section>
+  <p class="note" id="note" hidden></p>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="mapTitle">
+      <div class="cardhead"><div><h2 id="mapTitle"></h2><p class="sub" id="mapSub"></p></div></div>
+      <div class="yearbar">
+        <button class="play" id="play" aria-label="Play years"><svg viewBox="0 0 12 12"><path id="playIcon" d="M2 1l9 5-9 5z"/></svg></button>
+        <input type="range" id="year" min="0" max="18" step="1" aria-label="Year">
+        <span class="yearlabel" id="yearLabel"></span>
+      </div>
+      <svg id="map" viewBox="0 0 975 610" role="img" aria-label="Map of metro areas"></svg>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <aside class="card side" aria-labelledby="ctxName">
+      <div class="finder">
+        <input id="find" list="metroList" placeholder="Find a metro area" autocomplete="off" aria-label="Find a metro area">
+        <datalist id="metroList"></datalist>
+        <button id="clear" type="button">All metros</button>
+      </div>
+      <h2 class="ctxname" id="ctxName"></h2>
+      <div class="kpis" id="kpis"></div>
+      <div class="linewrap" id="lineWrap"><svg id="line" role="img" aria-label="Trend 2006 to 2024"></svg></div>
+      <div class="linelegend" id="lineLegend"></div>
+      <p class="chartnote">Note: 2020 estimates use the ACS 1-year experimental weights.</p>
+    </aside>
+  </div>
+
+  <section class="card rank" aria-labelledby="rankTitle">
+    <div class="cardhead"><div><h2 id="rankTitle"></h2><p class="sub">Click a row to see its trend. A negative value is a surplus.</p></div></div>
+    <div class="tablewrap"><table><thead><tr><th>#</th><th>Metro area</th><th class="n">Housing units</th><th class="n">% of 2000 stock</th><th class="barcell" aria-hidden="true"><div class="barhead"><span>← Surplus</span><span>Shortage →</span></div></th></tr></thead><tbody id="rankBody"></tbody></table></div>
+    <button class="more" id="more" type="button">Show all 202 metros</button>
+  </section>
+
+  <section class="methods" aria-label="Methods">
+    <div><h3>Missing households</h3>
+      <p>The gap between expected and observed households. Expected households are calculated by applying each metro’s 2000 headship rates—the share of people who are household heads—in 40 age × race/ethnicity groups to its current population. A fixed metro-specific adjustment reconciles person-based and housing-unit-based household counts in 2000, setting the baseline gap to zero.</p>
+      <p>A positive value means fewer households than expected under this benchmark; a negative value means more. The measure does not directly identify why household formation differs from the benchmark, and a negative value does not necessarily indicate excess housing.</p>
+      <p>Age and race/ethnicity views aggregate contributions from the same joint calculation. A reconciliation adjustment is allocated across groups in proportion to their observed household counts so that the signed group contributions sum to each metro’s total, apart from rounding. Education uses a separate benchmark, described under “Data and totals.”</p></div>
+    <div><h3>Vacancy gap</h3>
+      <p>The difference between the housing stock needed to accommodate current households at an estimated natural vacancy rate and the existing stock in each owner or rental market. Equivalently, it measures the gap between the vacant units implied by that benchmark and observed vacancies, holding occupied units fixed.</p>
+      <p>Natural vacancy rates are estimated for each metro and tenure market from the relationship between vacancy rates and subsequent house-price or rent growth.</p>
+      <p>A positive value indicates fewer vacant units than the benchmark implies; a negative value indicates more. The measure describes vacancy conditions for existing households and does not include the additional housing demand represented by missing households.</p></div>
+    <div><h3>Data and totals</h3>
+      <p>Estimates use the 2000 Census 5% sample and ACS 1-year microdata from IPUMS USA for 202 metropolitan areas in the contiguous United States, using 2013 CBSA definitions. The series covers 2006–2024; 2020 estimates use the Census Bureau’s experimental ACS 1-year weights. These are preliminary research estimates for the covered metros, not a complete U.S. total.</p>
+      <p>“All 202 metros” sums positive gaps for the selected measure or group, without offsetting them against negative gaps elsewhere. For the combined vacancy gap, positive owner and rental gaps are summed separately. Because this rule is applied separately to each group, aggregate group totals need not sum to the overall total.</p>
+      <p>Percentages divide the selected gap by the metro’s 2000 reference housing stock. For “All 202 metros,” the denominator is the combined reference stock of all 202 metros. Group percentages use this same denominator, not the group’s population or household count.</p>
+      <p>Education estimates cover adults ages 25–64 and use a separate age × education headship benchmark. They are not a decomposition of the main age × race/ethnicity estimate.</p></div>
+  </section>
+  <p class="foot">Estimates are preliminary and may change as the paper is revised. Small metros and small groups carry sampling error from the ACS. Contact: Seongmoon Cho.</p>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script src="data.js"></script>
+<script src="geo.js"></script>
+<script>
+const DATA=window.DATA;
+const GEO=window.GEO;
+(function(){
+const $=s=>document.getElementById(s);
+const NS='http://www.w3.org/2000/svg';
+const YEARS=DATA.years, NY=YEARS.length;
+const EXP=new Set(DATA.experimental||[]);
+const M=DATA.metros; const byId={}; M.forEach(m=>byId[m.id]=m);
+const LABEL={MH:'All households',MHo:'Owners',MHr:'Renters',a15:'Ages 15–24',a25:'Ages 25–34',a35:'Ages 35–44',a45:'Ages 45–54',a55:'Ages 55–64',a65:'Ages 65+',
+ rW:'White',rB:'Black',rA:'Asian / Pacific Islander',rO:'Other / multiracial',rH:'Hispanic',
+ eH:'High school or less',eS:'Some college',eB:"Bachelor's or more",VG:'Total',VGr:'Renter',VGo:'Owner'};
+const SHORT={rW:'White',rB:'Black',rA:'Asian/PI',rO:'Other',rH:'Hispanic',eH:'HS or less',eS:'Some college',eB:'BA+',a15:'15–24',a25:'25–34',a35:'35–44',a45:'45–54',a55:'55–64',a65:'65+',MHo:'Owners',MHr:'Renters',MH:'All',VG:'Total',VGr:'Renter',VGo:'Owner'};
+const BREAK={mh:[['total','All',['MH']],['tenure','Tenure',['MHo','MHr']],['age','Age',['a15','a25','a35','a45','a55','a65']],['race','Race/ethnicity',['rW','rB','rA','rO','rH']],['edu','Education',['eH','eS','eB']]],
+             vg:[['tenure','Tenure',['VG','VGr','VGo']]]};
+const NOTES={edu:'Education: adults 25–64 only, standardized by age × education. These groups do not add up to the all-household total.',
+  race:'Race/ethnicity: White, Black, Asian/Pacific Islander and Other are non-Hispanic. Hispanic people may be of any race.',
+  age:'Age is the age of the people who would head the missing households.',
+  tenure:'Tenure splits missing households by whether they would own or rent, using each group’s current owner/renter mix.'};
+let st={tab:'mh',br:'total',s:'MH',unit:'units',yi:NY-1,metro:null,all:false};
+try{const h=location.hash.replace('#','');if(h==='vg'){st.tab='vg';st.br='tenure';st.s='VG';}}catch(e){}
+
+// per-series scales
+const SC={};
+DATA.series.forEach(s=>{const r=[];let mx=0;M.forEach(m=>m[s].forEach(v=>{if(v!=null){r.push(Math.abs(v)/m.sa00*100);mx=Math.max(mx,Math.abs(v));}}));
+  r.sort((a,b)=>a-b);let p=r[Math.floor(r.length*.95)];const mag=Math.pow(10,Math.floor(Math.log10(p)));p=Math.ceil(p/mag*2)/2*mag;SC[s]={p,mx};});
+const BINS=['--d-n3','--d-n2','--d-0','--d-p1','--d-p2','--d-p3'];
+function bin(rate,s){const p=SC[s].p;if(rate<-.5*p)return 0;if(rate<-.15*p)return 1;if(rate<.15*p)return 2;if(rate<.5*p)return 3;if(rate<p)return 4;return 5;}
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+const fmtN=v=>{if(v==null||isNaN(v))return '–';const a=Math.abs(v),sg=v<0?'−':'';if(a>=1e6)return sg+(a/1e6).toFixed(2)+'M';if(a>=1e5)return sg+Math.round(a/1e3)+'K';if(a>=1e3)return sg+(a/1e3).toFixed(1)+'K';return sg+Math.round(a);};
+const fmtF=v=>v==null?'–':(v<0?'−':'')+Math.round(Math.abs(v)).toLocaleString('en-US');
+const fmtP=v=>{if(v==null||isNaN(v))return '–';const a=Math.abs(v);return (v<0?'−':'')+a.toFixed(a<10?2:1)+'%';};
+const fmtPct=v=>(v*100).toFixed(1)+'%';
+const rateOf=(m,s,i)=>m[s][i]==null?null:m[s][i]/m.sa00*100;
+function series(s,ctx){ // values array for context
+  if(ctx) return ctx[s].slice();
+  return DATA.nat[s].slice();}
+const denom=ctx=>ctx?ctx.sa00:DATA.sa00;
+const val=(v,ctx)=>v==null?null:(st.unit==='pct'?v/denom(ctx)*100:v);
+const fmtV=v=>st.unit==='pct'?fmtP(v):fmtN(v);
+
+// ---- controls
+function renderControls(){
+  $('tab-mh').setAttribute('aria-selected',st.tab==='mh');$('tab-vg').setAttribute('aria-selected',st.tab==='vg');
+  const brs=BREAK[st.tab];
+  $('breakdownCtl').hidden=st.tab==='vg';
+  const bd=$('breakdown');bd.innerHTML='';
+  brs.forEach(([k,l])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.setAttribute('aria-pressed',st.br===k);b.onclick=()=>{st.br=k;st.s=brs.find(x=>x[0]===k)[2][0];if(k==='age')st.s='a25';render();};bd.appendChild(b);});
+  const list=brs.find(x=>x[0]===st.br)[2];
+  $('groupCtl').hidden=list.length<2;$('groupLabel').textContent=st.tab==='vg'?'Market':'Group';
+  const g=$('groups');g.innerHTML='';
+  list.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=st.tab==='vg'?LABEL[s]:SHORT[s];b.setAttribute('aria-pressed',st.s===s);b.onclick=()=>{st.s=s;render();};g.appendChild(b);});
+  $('u-units').setAttribute('aria-pressed',st.unit==='units');$('u-pct').setAttribute('aria-pressed',st.unit==='pct');
+  const n=st.tab==='mh'?NOTES[st.br]:null;$('note').hidden=!n;if(n)$('note').textContent=n;
+}
+function measureName(){return st.tab==='mh'?'Missing households':'Vacancy gap';}
+function seriesName(){if(st.tab==='vg')return st.s==='VG'?'Vacancy gap, owner + renter markets':'Vacancy gap, '+LABEL[st.s].toLowerCase()+' market';
+  if(st.s==='MH')return 'Missing households';return 'Missing households · '+LABEL[st.s];}
+
+// ---- map
+const map=$('map');
+map.innerHTML=`<path class="nation" d="${GEO.nation}"/><path class="states" d="${GEO.inner}"/><g id="bub"></g>`;
+const gB=map.querySelector('#bub');
+const order=M.slice();
+const nodes={};
+M.forEach(m=>{const c=document.createElementNS(NS,'circle');const p=GEO.pos[m.id];c.setAttribute('cx',p[0]);c.setAttribute('cy',p[1]);c.setAttribute('class','b');
+  c.addEventListener('mousemove',e=>showMapTip(e,m));c.addEventListener('mouseleave',hideTip);c.addEventListener('click',()=>selectMetro(m.id));nodes[m.id]=c;gB.appendChild(c);});
+function renderMap(){
+  const s=st.s,i=st.yi,R=26,mx=SC[s].mx;
+  const cols=BINS.map(css);
+  order.sort((a,b)=>Math.abs(b[s][i]||0)-Math.abs(a[s][i]||0));
+  order.forEach(m=>{const c=nodes[m.id],v=m[s][i];const r=v==null?0:Math.max(1.6,Math.sqrt(Math.abs(v)/mx)*R);
+    c.setAttribute('r',r.toFixed(2));c.setAttribute('fill',v==null?'none':cols[bin(rateOf(m,s,i),s)]);c.classList.toggle('sel',st.metro===m.id);gB.appendChild(c);});
+  if(st.metro)gB.appendChild(nodes[st.metro]);
+  $('mapTitle').textContent=seriesName();
+  $('mapSub').textContent=`Circle size shows housing units; color shows the gap as a share of the metro’s 2000 stock.`;
+  $('yearLabel').textContent=YEARS[i];$('year').value=i;
+  // legend
+  const p=SC[s].p,br=[-.5*p,-.15*p,.15*p,.5*p,p];
+  const fl=x=>(x<0?'−':'')+(+Math.abs(x).toFixed(2)).toString()+'%';
+  const sizes=[mx/10,mx/2,mx].map(v=>{const mag=Math.pow(10,Math.floor(Math.log10(v)));return Math.round(v/mag)*mag;});
+  let sz='<svg width="170" height="66" viewBox="0 0 170 66">';
+  sizes.forEach((v,k)=>{const r=Math.sqrt(v/mx)*R;const cx=[16,58,128][k];sz+=`<circle cx="${cx}" cy="${54-r}" r="${r}"/><text x="${cx}" y="66" text-anchor="middle">${fmtN(v)}</text>`;});
+  sz+='</svg>';
+  $('legend').innerHTML=`<div class="lg-scale"><div class="lg-title">Gap as % of 2000 stock</div><div class="lg-bins">${cols.map(c=>`<i style="background:${c}"></i>`).join('')}</div><div class="lg-ticks">${br.map((b,k)=>`<span style="left:${(k+1)/6*100}%">${fl(b)}</span>`).join('')}</div><div class="lg-ends"><span>Surplus</span><span>Shortage</span></div></div><div class="lg-size"><div class="lg-title">Housing units</div>${sz}</div>`;
+}
+
+// ---- tooltip
+const tip=$('tip');
+function placeTip(e){const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+14,y=e.clientY+14;if(x+w>innerWidth-8)x=e.clientX-w-14;if(y+h>innerHeight-8)y=e.clientY-h-14;tip.style.left=Math.max(8,x)+'px';tip.style.top=Math.max(8,y)+'px';}
+function hideTip(){tip.hidden=true;}
+function showMapTip(e,m){const s=st.s,i=st.yi,v=m[s][i];
+  let h=`<div class="t">${m.name}</div><div class="m">${seriesName()}, ${YEARS[i]}</div><div class="row"><span>Gap</span><b>${fmtF(v)} units</b></div><div class="row"><span>Share of 2000 stock</span><b>${fmtP(rateOf(m,s,i))}</b></div>`;
+  if(st.tab==='vg'){h+=`<div class="row"><span>Renter vacancy: actual / natural</span><b>${m.ar[i]==null?'–':fmtPct(m.ar[i])} / ${fmtPct(m.vr)}</b></div><div class="row"><span>Owner vacancy: actual / natural</span><b>${m.ao[i]==null?'–':fmtPct(m.ao[i])} / ${fmtPct(m.vo)}</b></div>`;}
+  else if(s==='MH'){h+=`<div class="row"><span>Households</span><b>${fmtF(m.H[i])}</b></div><div class="row"><span>Expected at 2000 rates</span><b>${fmtF(m.Hs[i])}</b></div>`;}
+  h+='<div class="m">Click to see the trend</div>';
+  tip.innerHTML=h;tip.hidden=false;placeTip(e);}
+
+// ---- side panel
+function ctx(){return st.metro?byId[st.metro]:null;}
+function renderSide(){
+  const c=ctx(),s=st.s,i=st.yi;
+  $('ctxName').textContent=c?c.name:'All 202 metros';
+  const raw=series(s,c),v=raw.map(x=>val(x,c));
+  let pk=-Infinity,pi=0;v.forEach((x,k)=>{if(x!=null&&x>pk){pk=x;pi=k;}});
+  const i19 = YEARS.indexOf(2019);
+  const d = (
+    YEARS[i] > 2019 &&
+    i19 >= 0 &&
+    v[i] != null &&
+    v[i19] != null
+  ) ? v[i] - v[i19] : null;
+
+  const changeText = d == null
+    ? '–'
+    : (d > 0 ? '+' : '') + (
+        st.unit === 'pct'
+          ? fmtP(d).replace('%', ' pp')
+          : fmtN(d)
+      );
+  const alt=st.unit==='pct'?fmtN(raw[i]):fmtP(raw[i]==null?null:raw[i]/denom(c)*100);
+  $('kpis').innerHTML=`<div class="kpi"><div class="k">${YEARS[i]}</div><div class="v">${fmtV(v[i])}</div><div class="s">${st.unit==='pct'?alt+' units':alt+' of 2000 stock'}</div></div>
+   <div class="kpi"><div class="k">Peak</div><div class="v">${fmtV(pk)}</div><div class="s">in ${YEARS[pi]}</div></div>
+   <div class="kpi"><div class="k">Since 2019</div><div class="v">${changeText}</div><div class="s">${YEARS[i]<=2019?'select a later year':'2019 to '+YEARS[i]}</div></div>`;
+  renderLine(c);
+}
+let LW=420,LH=250;const ML=48,MR=12,MT=12,MB=26;
+const xS=y=>ML+(y-2006)/(2024-2006)*(LW-ML-MR);
+function niceTicks(lo,hi,n){const span=hi-lo||1;let step=Math.pow(10,Math.floor(Math.log10(span/n)));const err=span/n/step;if(err>=7.5)step*=10;else if(err>=3.5)step*=5;else if(err>=1.5)step*=2;const t=[];const top=Math.ceil(hi/step-1e-9)*step;for(let x=Math.floor(lo/step+1e-9)*step;x<=top+step*1e-6;x+=step)t.push(+x.toFixed(10));return t;} // ticks span the data: the top gridline is the first tick at or above the max
+function tickF(t){if(st.unit==='pct')return (t<0?'−':'')+(+Math.abs(t).toFixed(2))+'%';const a=Math.abs(t),sg=t<0?'−':'';if(a>=1e6)return sg+(+(a/1e6).toFixed(2))+'M';if(a>=1e3)return sg+(+(a/1e3).toFixed(1))+'K';return sg+a;}
+function lineSet(){const brs=BREAK[st.tab].find(x=>x[0]===st.br)[2];return brs;}
+function renderLine(c){
+  const L=$('line');const wr=$('lineWrap');LW=Math.max(260,wr.clientWidth);LH=Math.max(200,wr.clientHeight);L.setAttribute('viewBox',`0 0 ${LW} ${LH}`);const set=lineSet();const s=st.s;
+  const data=set.map(k=>({k,v:series(k,c).map(x=>val(x,c))}));
+  let lo=0,hi=0;data.forEach(d=>d.v.forEach(x=>{if(x!=null){lo=Math.min(lo,x);hi=Math.max(hi,x);}}));
+  const ticks=niceTicks(lo,hi,4);lo=Math.min(lo,ticks[0]);hi=Math.max(hi,ticks[ticks.length-1]);
+  const yS=x=>MT+(hi-x)/(hi-lo||1)*(LH-MT-MB);
+  let h='<g class="grid">'+ticks.map(t=>`<line x1="${ML}" x2="${LW-MR}" y1="${yS(t)}" y2="${yS(t)}"/><text x="${ML-6}" y="${yS(t)+4}" text-anchor="end">${tickF(t)}</text>`).join('')+'</g>';
+  if(lo<0)h+=`<line class="zero" x1="${ML}" x2="${LW-MR}" y1="${yS(0)}" y2="${yS(0)}"/>`;
+  [2006,2010,2014,2018,2022,2024].forEach(y=>h+=`<text x="${xS(y)}" y="${LH-6}" text-anchor="middle">${y}</text>`);
+  h+=`<line class="yr" x1="${xS(YEARS[st.yi])}" x2="${xS(YEARS[st.yi])}" y1="${MT}" y2="${LH-MB}"/>`;
+  const emph=css('--emph'),oth=css('--other');
+  const ordered=data.filter(d=>d.k!==s).concat(data.filter(d=>d.k===s));
+  ordered.forEach(d=>{const col=d.k===s?emph:oth;let solid='',dash='',prev=null;YEARS.forEach((y,k)=>{if(d.v[k]==null){prev=null;return;}const x=xS(y),yy=yS(d.v[k]);if(prev){const sg=`M${prev[1].toFixed(1)},${prev[2].toFixed(1)}L${x.toFixed(1)},${yy.toFixed(1)}`;solid+=sg;}prev=[y,x,yy];});
+    const sw=d.k===s?'stroke-width="2.5"':'';
+    h+=`<path class="ln" stroke="${col}" d="${solid}" ${sw}/>`;
+    if(d.k===s){const k=st.yi;if(d.v[k]!=null)h+=`<circle cx="${xS(YEARS[k])}" cy="${yS(d.v[k])}" r="4.5" fill="${col}" stroke="${css('--surface')}" stroke-width="2"/>`;}
+  });
+  h+=`<line class="cross" id="cross" x1="0" x2="0" y1="${MT}" y2="${LH-MB}" visibility="hidden"/><rect id="lhit" x="${ML}" y="${MT}" width="${LW-ML-MR}" height="${LH-MT-MB}" fill="transparent"/>`;
+  L.innerHTML=h;
+  $('lineLegend').innerHTML=set.length>1?`<span><i style="background:${emph}"></i>${LABEL[s]}</span><span><i style="background:${oth}"></i>Other ${st.tab==='vg'?'markets':'groups'} (hover for values)</span>`:`<span><i style="background:${emph}"></i>${c?'This metro':'Sum of metros with a positive gap'}</span>`;
+  const hit=L.querySelector('#lhit'),cr=L.querySelector('#cross');
+  hit.addEventListener('mousemove',e=>{const pt=L.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(L.getScreenCTM().inverse());
+    let yr=Math.round(2006+(q.x-ML)/(LW-ML-MR)*18);yr=Math.max(2006,Math.min(2024,yr));const k=YEARS.indexOf(yr);
+    cr.setAttribute('x1',xS(yr));cr.setAttribute('x2',xS(yr));cr.setAttribute('visibility','visible');
+    const rows=data.slice().sort((a,b)=>(b.v[k]??-1e18)-(a.v[k]??-1e18)).map(d=>`<div class="row"><span><i class="sw" style="background:${d.k===s?emph:oth}"></i>${set.length>1?LABEL[d.k]:'Gap'}</span><b>${fmtV(d.v[k])}</b></div>`).join('');
+    tip.innerHTML=`<div class="t">${yr}</div>${rows}`;tip.hidden=false;placeTip(e);});
+  hit.addEventListener('mouseleave',()=>{cr.setAttribute('visibility','hidden');hideTip();});
+  hit.addEventListener('click',e=>{const pt=L.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(L.getScreenCTM().inverse());let yr=Math.round(2006+(q.x-ML)/(LW-ML-MR)*18);const k=YEARS.indexOf(Math.max(2006,Math.min(2024,yr)));if(k>=0){st.yi=k;render();}});
+}
+
+// ---- ranking
+function renderRank(){
+  const s=st.s,i=st.yi,key=st.unit==='pct'?(m=>rateOf(m,s,i)):(m=>m[s][i]);
+  const rows=M.filter(m=>m[s][i]!=null).sort((a,b)=>key(b)-key(a));
+  const show=st.all?rows:rows.slice(0,10);
+  const mx=Math.max(...rows.map(m=>Math.abs(key(m))));
+  $('rankTitle').textContent=`Largest gaps, ${YEARS[i]} · ${seriesName()}`;
+  $('rankBody').innerHTML=show.map((m,k)=>{const v=key(m),w=Math.abs(v)/mx*100;return `<tr class="row${st.metro===m.id?' sel':''}" data-id="${m.id}" tabindex="0"><td>${rows.indexOf(m)+1}</td><td>${m.name}</td><td class="n">${fmtF(m[s][i])}</td><td class="n">${fmtP(rateOf(m,s,i))}</td><td class="barcell" aria-hidden="true"><div class="dbar"><div class="bar${v<0?' neg':''}" style="width:${(w/2).toFixed(1)}%"></div></div></td></tr>`;}).join('');
+  $('more').textContent=st.all?'Show top 10':'Show all '+rows.length+' metros';
+}
+$('rankBody').addEventListener('click',e=>{const tr=e.target.closest('tr.row');if(tr)selectMetro(+tr.dataset.id);});
+$('rankBody').addEventListener('keydown',e=>{if(e.key==='Enter'){const tr=e.target.closest('tr.row');if(tr)selectMetro(+tr.dataset.id);}});
+$('more').onclick=()=>{st.all=!st.all;renderRank();};
+
+function selectMetro(id){st.metro=st.metro===id?null:id;$('find').value=st.metro?byId[st.metro].name:'';render();}
+$('metroList').innerHTML=M.map(m=>`<option value="${m.name}">`).join('');
+$('find').addEventListener('change',e=>{const m=M.find(x=>x.name.toLowerCase()===e.target.value.trim().toLowerCase())||M.find(x=>x.name.toLowerCase().includes(e.target.value.trim().toLowerCase())&&e.target.value.trim().length>2);if(m){st.metro=m.id;e.target.value=m.name;render();}});
+$('clear').onclick=()=>{st.metro=null;$('find').value='';render();};
+$('tab-mh').onclick=()=>{if(st.tab==='mh')return;st.tab='mh';st.br='total';st.s='MH';render();};
+$('tab-vg').onclick=()=>{if(st.tab==='vg')return;st.tab='vg';st.br='tenure';st.s='VG';render();};
+$('u-units').onclick=()=>{st.unit='units';render();};$('u-pct').onclick=()=>{st.unit='pct';render();};
+$('year').addEventListener('input',e=>{st.yi=+e.target.value;render();});
+let timer=null;
+function stop(){clearInterval(timer);timer=null;$('playIcon').setAttribute('d','M2 1l9 5-9 5z');$('play').setAttribute('aria-label','Play years');}
+$('play').onclick=()=>{if(timer){stop();return;}if(st.yi>=NY-1)st.yi=0;render();$('playIcon').setAttribute('d','M2 1h3v10H2zM7 1h3v10H7z');$('play').setAttribute('aria-label','Pause');
+  timer=setInterval(()=>{if(st.yi>=NY-1){stop();return;}st.yi++;render();},800);};
+function render(){renderControls();renderMap();renderSide();renderRank();}
+render();
+try{let rq=0;new ResizeObserver(()=>{cancelAnimationFrame(rq);rq=requestAnimationFrame(()=>renderLine(ctx()));}).observe($('lineWrap'));}catch(e){}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});}catch(e){}
+})();
+</script>
+
+</body>
+</html>
